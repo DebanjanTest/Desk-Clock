@@ -87,6 +87,7 @@
             display: flex;
             gap: 1rem;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .theme-toggle {
@@ -120,6 +121,62 @@
         .settings-btn:hover {
             background: var(--success-color);
             transform: translateY(-2px);
+        }
+
+        .fullscreen-btn {
+            background: var(--warning-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .fullscreen-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .size-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .size-btn {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 30px;
+            font-weight: normal;
+        }
+
+        .size-btn:nth-child(1) {
+            font-size: 0.7rem;
+        }
+
+        .size-btn:nth-child(2) {
+            font-size: 0.9rem;
+        }
+
+        .size-btn:nth-child(3) {
+            font-size: 1.1rem;
+        }
+
+        .size-btn:nth-child(4) {
+            font-size: 1.3rem;
+        }
+
+        .size-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
         }
 
         /* Tab Navigation */
@@ -193,6 +250,19 @@
             color: var(--primary-color);
             text-shadow: 2px 2px 4px var(--shadow-color);
             margin-bottom: 1rem;
+            transition: font-size 0.3s ease;
+        }
+
+        .current-time.size-small {
+            font-size: clamp(2rem, 6vw, 4rem);
+        }
+
+        .current-time.size-large {
+            font-size: clamp(4rem, 10vw, 8rem);
+        }
+
+        .current-time.size-xlarge {
+            font-size: clamp(5rem, 12vw, 10rem);
         }
 
         .current-date {
@@ -453,6 +523,11 @@
             .controls {
                 flex-direction: column;
                 width: 100%;
+                gap: 0.5rem;
+            }
+
+            .size-controls {
+                justify-content: center;
             }
 
             .tab-nav {
@@ -541,6 +616,13 @@
             <div class="logo">Study Timer</div>
             <div class="controls">
                 <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+                <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+                <div class="size-controls">
+                    <button class="size-btn" onclick="changeClockSize('small')">A</button>
+                    <button class="size-btn" onclick="changeClockSize('medium')">A</button>
+                    <button class="size-btn" onclick="changeClockSize('large')">A</button>
+                    <button class="size-btn" onclick="changeClockSize('xlarge')">A</button>
+                </div>
                 <button class="settings-btn" onclick="openSettings()">⚙️ Settings</button>
             </div>
         </header>
@@ -657,6 +739,50 @@
             localStorage.setItem('theme', theme);
         }
 
+        // Fullscreen functionality
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    showNotification('Fullscreen not supported or failed', 'error');
+                });
+            } else {
+                document.exitFullscreen().catch(err => {
+                    showNotification('Exit fullscreen failed', 'error');
+                });
+            }
+        }
+
+        // Clock size adjustment
+        function changeClockSize(size) {
+            const clockElement = document.getElementById('current-time');
+            
+            // Remove all size classes
+            clockElement.classList.remove('size-small', 'size-large', 'size-xlarge');
+            
+            // Add new size class if not medium
+            if (size !== 'medium') {
+                clockElement.classList.add('size-' + size);
+            }
+            
+            // Update button styles to show selected size
+            const sizeButtons = document.querySelectorAll('.size-btn');
+            sizeButtons.forEach((btn, index) => {
+                btn.style.fontWeight = 'normal';
+                btn.style.backgroundColor = 'var(--bg-secondary)';
+            });
+            
+            // Highlight selected size button
+            const sizeIndex = ['small', 'medium', 'large', 'xlarge'].indexOf(size);
+            if (sizeIndex !== -1) {
+                sizeButtons[sizeIndex].style.fontWeight = 'bold';
+                sizeButtons[sizeIndex].style.backgroundColor = 'var(--primary-color)';
+                sizeButtons[sizeIndex].style.color = 'white';
+            }
+            
+            // Save size preference
+            localStorage.setItem('clockSize', size);
+        }
+
         function loadSettings() {
             // Load theme
             const savedTheme = localStorage.getItem('theme');
@@ -665,6 +791,14 @@
                 document.documentElement.setAttribute('data-theme', theme);
                 const button = document.querySelector('.theme-toggle');
                 button.textContent = theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode';
+            }
+
+            // Load clock size
+            const savedSize = localStorage.getItem('clockSize');
+            if (savedSize) {
+                changeClockSize(savedSize);
+            } else {
+                changeClockSize('medium'); // Set default size
             }
 
             // Load background image
